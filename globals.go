@@ -11,7 +11,7 @@ const colorCyan = "\033[36m"
 const colorPurple = "\033[35m"
 const colorYellow = "\033[33m"
 
-// Note represents a musical note; not sure if a structure was warranted for a one-element thing ??
+// Note represents a musical note
 type Note struct {
 	Pitch string // e.g., "C5"
 }
@@ -33,7 +33,7 @@ type Outlier struct {
 }
 
 // making a map initializes it well-enough
-// create stats map, which will be a correspondence between pitch (the string) and NoteStats
+// create stats map, which will be a correspondence between pitch (the string) and the NoteStats struct
 var stats = make(map[string]NoteStats)
 
 // making an array of structures (called outliers) initializes it well-enough
