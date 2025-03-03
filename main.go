@@ -11,14 +11,16 @@ import (
 
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
-	// fmt.Println("Type the note letter (or 'o' for outliers, 'q' to quit).")
+	// Rick knows about options such as: s, o, and q, so no need to bother printing then to the terminal
 
 	for {
-		// get the next random note
-		note := NewRandomNote() // NewRandomNote() returns a simple struct
+		// Get the next random note
+		note := NewRandomNote() // NewRandomNote() returns a simple struct, i.e. custom type Note.
+		// Refer to the type definition in globals.go for why it is done this way.
 
-		// Quiz :: run a single question, tracks time, and returns result: isCorrect, shouldQuit, outlierAdded
-		isCorrect, shouldQuit, outlierAdded := Quiz(note, stats, &outliers)
+		// Quiz :: process a single question, track time, and return result: isCorrect, shouldQuit, outlierAdded
+		isCorrect, shouldQuit, outlierAdded := Quiz(note, stats, &outliers) // "&outliers" gets a pure and simple pointer
+		// ... the above is a good example of passing by pointer.
 		if shouldQuit {
 			fmt.Printf("Final Score: %d/%d (%.1f%%)\n", correct, total, float64(correct)/float64(total)*100)
 			PrintStats(stats)
@@ -26,7 +28,7 @@ func main() {
 			break
 		}
 
-		// tally, calculate, and print the current score
+		// Tally, calculate, and print the current score
 		if isCorrect {
 			correct++
 		}
@@ -34,44 +36,56 @@ func main() {
 		percent := float64(correct) / float64(total) * 100
 		fmt.Printf("Score: %d/%d (%.1f%%)\n", correct, total, percent)
 
-		// before looping to obtain the next random note, conditionally notify the player if an outlier occurred
+		// Before looping to obtain the next random note, conditionally notify the player if an outlier occurred
 		if outlierAdded {
-			fmt.Printf("%s That answer was added to the outlier ledger.%s\n", Green, Reset)
+			fmt.Printf("%s That answer will be added to the outlier ledger.%s\n", Green, Reset)
 		}
 
-		// pause a sec before re-prompting the player
-		time.Sleep(1 * time.Second)
+		// Pause for a bit before re-prompting the player
+		// time.Sleep(1 * time.Second) // optionally set to a fraction or multiple of one second 
+		time.Sleep(time.Second) // one second 
 	}
 }
 
 // NewRandomNote generates a random note
-func NewRandomNote() Note { // returns a simple struct
+func NewRandomNote() Note { // Returns a simple struct; refer to Note's definition for details ::: - -
 	pitches := []string{"A6",
 		"G5", "F5", "E5", "D5", "C5", "B5", "A5",
 		"G4", "F4", "E4", "D4", "C4", "B4", "A4",
 		"G3", "F3", "E3", "D3", "C3", "B3", "A3",
 		"G2", "F2"}
 	//  24 pitches in the slice
-	r := rand.Intn(24)             // so also 24 random indexes for pitches slice
-	return Note{Pitch: pitches[r]} // Pitch is a member of the Note struct
+	r := rand.Intn(24)             // so, also 24 random indexes for the pitches slice
+	return Note{Pitch: pitches[r]} // Pitch is a member of the Note struct ...
+	// ... this says: make a Note var with its Pitch field set to pitches[r], and return that to the caller.
 }
 
-// Quiz process the question, track time, returns results: (isCorrect, shouldQuit, outlierAdded)
-func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) {
-	reader := bufio.NewReader(os.Stdin)
+// Quiz process the question, track time, return results: (isCorrect, shouldQuit, outlierAdded)
+func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) { // ::: - -
+	/*
+		Usage of the Note type instead of a simple string is explained in the globals.go file.
+		&outliers makes a pointer to the slice, so Quiz gets *[]Outlier as a parameter (a pointer).
+		*[]Outlier is a pointer to that slice; the * de-references, while pointing, resulting in the slice, not just ...
+		... the pointer itself. Why do this? Because passing outliers []Outlier would give us a copy rather than the original.
+		Here outliers *[]Outlier gives us the outliers "out there", whereas if we had used outliers []Outlier we'd get a local
+		copy of that outside world.
+		"go" always passes by value, "exception": maps are reference types, so maps are kinda pseudo pointers by default.
+	*/
 
-	fmt.Println("What note is this? (e.g., 'C', 'o' for outliers, 's' for stats, or 'q' to quit)\n")
-	fmt.Println(DrawStaff(note))
+	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
+
+	fmt.Println("What note is this? (or give a directive: s, o, q etc.)\n")
+	fmt.Println(DrawStaff(note)) // DrawStaff is passed Pitch via a type Note
 	fmt.Print("Guess: ")
 
-	// obtain player's answer, on the clock
+	// Obtain player's answer, on the clock
 	start := time.Now()                           // start the clock
 	answer, _ := reader.ReadString('\n')          // obtain the player's guess
 	elapsedMs := time.Since(start).Milliseconds() // stop the clock
-	elapsedSec := float64(elapsedMs) / 1000.0     // recast time to a float
+	elapsedSec := float64(elapsedMs) / 1000.0     // recast time to a float, and convert Ms to sec
 	answer = strings.TrimSpace(answer)            // trim the answer (essential)
 
-	// three ways to return to the main loop
+	// Three ways to return to the main loop
 	if strings.ToLower(answer) == "q" {
 		return false, true, false // (isCorrect, shouldQuit, outlierAdded)
 	}
@@ -84,18 +98,17 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 		return false, false, false // Continue, no score change, no outlier
 	}
 
-	// todo: why use the Note struct to pass a pitch
 	pitch := note.Pitch // the note struct was
 	pitch = strings.TrimRight(pitch, "23456")
 
-	// todo: summarize exactly what is going one here?
-	// stats was passed in as map[string]NoteStats
-	s := stats[note.Pitch] // Pitch is a field/member of the Note struct (passed as note)
-	// here note is actually a Note struct (because it was passed into this func as such)
-	// stats is a map, a correspondence between pitch (the string) and the NoteStats struct
-	// therefore, s is a NoteStats struct
+	// "stats" was passed-in as map[string]NoteStats // a map of key:string, NoteStats pairs
+	s := stats[note.Pitch] // "Pitch" is a field/member of the Note struct (internally: note) ...
+	// ... stats[note.Pitch] obtains the NoteStats struct "indexed" by the Key string: note.Pitch
+	// therefore, "s" is created as a NoteStats object.
+	// Here "note" is actually a Note struct (because it was passed into this func as such)
+	// "stats" is a map, a correspondence between pitch (a string) and a NoteStats struct
 
-	s.Attempts++ // increment the Attempts field/member of the NoteStats struct
+	s.Attempts++ // increment the Attempts field/member of the current (specific) NoteStats struct
 	outlierAdded := false
 	if strings.ToUpper(answer) == pitch {
 		fmt.Printf("%sCorrect!%s\n", Green, Reset) // todo::: move this into a reprint of staff
@@ -104,7 +117,8 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 			s.CorrectCount++
 			s.AvgCorrectSec = float64(s.TotalCorrectMs) / float64(s.CorrectCount) / 1000.0
 		} else {
-			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec})
+			//
+			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec}) // add some literals to a slice
 			outlierAdded = true
 		}
 		stats[note.Pitch] = s
@@ -113,15 +127,20 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 
 	// Check for fast miss outlier
 	if elapsedMs < 2100 { // 2.1 seconds
-		fmt.Printf("%sWrong. It was %s. (Too fast, not counted)%s\n", Red, pitch, Reset) // todo::: move this into a reprint of staff
-		*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec})
+		fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)                // todo::: move this into a reprint of staff
+		*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec}) // essential pointer magic here...
+		// Without pointer magic: outliers := append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec})
+		// ... append by itself (without any pointer magic) would just make an appended copy
+		// ... outliers naked is just a memory address which contains another memory address (to a value) 
+		// outliers is a global var of type []Outlier
 		outlierAdded = true
 	} else {
-		fmt.Printf("%sWrong. It was %s.%s\n", Red, pitch, Reset) // todo::: move this into a reprint of staff
+		fmt.Printf("%sActually it was %s, specifically %s %s\n", Red, pitch, note.Pitch, Reset) // todo::: move this into a reprint of staff
 		s.Misses++
 	}
-	stats[note.Pitch] = s
-	return false, false, outlierAdded
+	stats[note.Pitch] = s // update the stats map at Key = note.Pitch; update it with the "s" structure, remembering that s := stats[note.Pitch] ... 
+	// ... and stats is a map of the form map[string]NoteStats
+	return false, false, outlierAdded // return three bools 
 }
 
 // PrintStats shows per-note performance in light blue
@@ -135,7 +154,7 @@ func PrintStats(stats map[string]NoteStats) {
 	// 13 pitches
 	fmt.Printf("%s--- Note Stats ---%s\n", colorYellow, Reset)
 	for _, pitch := range orderedPitches {
-		s := stats[pitch]
+		s := stats[pitch] // 
 		avgTime := "N/A"
 		if s.CorrectCount > 0 {
 			avgTime = fmt.Sprintf("%.3f seconds", s.AvgCorrectSec)
