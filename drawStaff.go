@@ -64,31 +64,31 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 			lineCounter++
 			if lineCounter > 24 {
 				return
-			} else if lineCounter == 14 {
+			} else if lineCounter == 14 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
 				fmt.Println()
 			}
 		}
 		// When correct, immediately reprint the staff with the note in green such that it appears that the note has changed color...
 		// ... and includes note.Pitch -- the player should adjust the terminal view scale to allow full view of prior staff
-	} else if correct { // ::: Correct case
+	} else if correct { // ::: Correct case !!
 		staff[lineIndex] = staff[lineIndex][:10] + Green + "●" + note.Pitch + Reset + staff[lineIndex][11:]
 		fmt.Println(strings.Join(staff, "\n")) // Print all the lines in one go
 		tryThatAgain = false
-	} else { // ::: Wrong case
+	} else { // ::: Wrong case !!
 		// When wrong, reprint the staff with the note in yellow such that it appears that the note has changed color ...
 		// ... and, add the correct note, e.g., E5, next to the yellow note to inform the player of the right answer.
-		// ::: first we setup the staff slice ...
+		// ::: -------- First, we setup the staff slice ... ----------------------------------------------------------------------------
 		if lineIndex == 14 {
 			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " A breaks the pattern" + Reset + staff[lineIndex][11:]
 		} else if lineIndex == 13 {
 			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " B breaks the pattern" + Reset + staff[lineIndex][11:]
-		} else {
+		} else { // ::: it is a regular line ...
 			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " " + Reset + staff[lineIndex][11:]
 		}
-		// ::: ... then we print all the lines, one at a time
+		// ::: ... then, we print all the lines, one at a time
 		lineCounter := 0
 		for _, oneOfThe25Lines := range staff {
-			fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, indexed
+			fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, per indexed
 			lineCounter++
 			if lineCounter > 24 {
 				tryThatAgain = true

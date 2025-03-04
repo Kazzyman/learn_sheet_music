@@ -10,11 +10,24 @@ import (
 )
 
 /*
+// ::: About:
 This project is spread across 3 go files and is formatted for JetBrains GoLand. The 3 files are globals.go, drawStaff.go
 and this one. The author is strictly a hobbyist who specializes in learning apps of personal interest, sometimes with a
 game-style option. The comments herein reflect the fact that it is highly-unlikely that anyone other than the author will
 ever read them. Three sequential colons: ::: causes the rest of a comment line to be highlighted.
 */
+
+/*
+// ::: Features:
+Notes show in Red for added visibility.
+Correct answers cause the note to turn green.
+Wrong answers turn the note yellow, and the correct response is shown alongside it.
+Wrong answers demand a repeat of the failed query, until correctly answered.
+All statistics are logged and reported during app shutdown; or upon request via directives: "s", or "o"
+Progress and scoring is shown during play.
+*/
+/*
+ */
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
 	tryThatAgain = false
@@ -144,12 +157,13 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 			s.TotalCorrectMs += elapsedMs
 			s.CorrectCount++
 			s.AvgCorrectSec = float64(s.TotalCorrectMs) / float64(s.CorrectCount) / 1000.0
-		} else if elapsedMs < 1000 { // 1000=1.00s ::: 1.00s because time.Sleep is 1.00s
-			fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)
+		} else if elapsedMs < 1090 { // 1000=1.00s ::: 1.00s because time.Sleep is 1.09s
+			fmt.Printf("%sIt was %s. (but too fast, answer given prior to query being shown, not counted)%s\n", Red, pitch, Reset)
 			outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
 			tryThatAgain = true // because even though it was correct, it was pure luck (answered prior to the query)
 		} else {
 			// The player took a long time to get it right, so log it as an outlier and set a flag to nudge the player for being pokey.
+			fmt.Printf("Too slow, therefore ... ")
 			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec}) // add some literals to a slice
 			outlierAdded = true
 		}
@@ -158,7 +172,7 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 	} else { // ::: Wrong
 		// Check for fast miss outlier
 		if elapsedMs < 1090 { // 2100 = 2.1 seconds, 700 = 0.7s, 1090 = 1.09s ::: 1.09s because time.Sleep is 1.0s
-			fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)
+			fmt.Printf("%sActually it was %s. (Too fast, answer given prior to query being shown, not counted)%s\n", Red, pitch, Reset)
 			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec}) // essential pointer magic here...
 			// Without pointer magic: outliers := append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec})
 			// ... append by itself (without any pointer magic) would just make an appended copy
