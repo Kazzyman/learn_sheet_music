@@ -9,22 +9,22 @@ import (
 func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple structure of notes ::: - -
 	// First we make an slice of strings, one string for each staff line
 	staff := []string{
-		"        ------ ",      // (A6)  6th octave starts on A and runs through G
-		"                    ", // (G5)
-		"  ------------------", // (F5)
-		"                    ", // (E5)
-		"  ------------------", // (D5)
-		"                    ", // (C5)
-		"  ------------------", // (B5)
-		"                    ", // (A5)  5th octave starts on A and runs through G
-		"  ------------------", // (G4)
-		"                    ", // (F4)
-		"  ------------------", // (E4)
-		"                    ", // (D4)
-		"        ------ ",      // (C4)
-		"                    ", // (B4)
-		"  ------------------", // (A4)  4th octave starts on A and runs through G
-		"                    ", // (G3)
+		"        ------ ",      // 1 (A6)  6th octave starts on A and runs through G
+		"                    ", // 2 (G5)
+		"  ------------------", // 3 (F5)
+		"                    ", // 4 (E5)
+		"  ------------------", // 5 (D5)
+		"                    ", // 6 (C5)
+		"  ------------------", // 7 (B5)
+		"                    ", // 8 (A5)  5th octave starts on A and runs through G
+		"  ------------------", // 9 (G4)
+		"                    ", // 10(F4)
+		"  ------------------", // 11(E4)
+		"                    ", // 12(D4)
+		"        ------ ",      // 13(C4)
+		"                    ", // 14(B4)                                  A & B are ::: pattern breakers
+		"  ------------------", // 15(A4)  4th octave starts on A and runs through G ::: pattern breaker A
+		"                    ", // 16 (G3)
 		"  ------------------", // (F3)
 		"                    ", // (E3)
 		"  ------------------", // (D3)
@@ -60,7 +60,7 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 		staff[lineIndex] = staff[lineIndex][:10] + Red + "●" + Reset + staff[lineIndex][11:]
 		lineCounter := 0
 		for _, oneOfThe25Lines := range staff {
-			fmt.Printf("%s\n", oneOfThe25Lines)
+			fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, indexed
 			lineCounter++
 			if lineCounter > 24 {
 				return
@@ -68,14 +68,33 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 				fmt.Println()
 			}
 		}
-	} else if correct {
-		// When correct, reprint the staff with the note in green such that it appears that the note has changed color.
-		staff[lineIndex] = staff[lineIndex][:10] + Green + "●" + Reset + staff[lineIndex][11:]
-		fmt.Println(strings.Join(staff, "\n"))
-	} else {
+		// When correct, immediately reprint the staff with the note in green such that it appears that the note has changed color...
+		// ... and includes note.Pitch -- the player should adjust the terminal view scale to allow full view of prior staff
+	} else if correct { // ::: Correct case
+		staff[lineIndex] = staff[lineIndex][:10] + Green + "●" + note.Pitch + Reset + staff[lineIndex][11:]
+		fmt.Println(strings.Join(staff, "\n")) // Print all the lines in one go
+		tryThatAgain = false
+	} else { // ::: Wrong case
 		// When wrong, reprint the staff with the note in yellow such that it appears that the note has changed color ...
 		// ... and, add the correct note, e.g., E5, next to the yellow note to inform the player of the right answer.
-		staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " " + Reset + staff[lineIndex][11:]
-		fmt.Println(strings.Join(staff, "\n"))
+		// ::: first we setup the staff slice ...
+		if lineIndex == 14 {
+			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " A breaks the pattern" + Reset + staff[lineIndex][11:]
+		} else if lineIndex == 13 {
+			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " B breaks the pattern" + Reset + staff[lineIndex][11:]
+		} else {
+			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " " + Reset + staff[lineIndex][11:]
+		}
+		// ::: ... then we print all the lines, one at a time
+		lineCounter := 0
+		for _, oneOfThe25Lines := range staff {
+			fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, indexed
+			lineCounter++
+			if lineCounter > 24 {
+				tryThatAgain = true
+				return
+			}
+		}
 	}
+	return
 }

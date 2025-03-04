@@ -13,11 +13,11 @@ import (
 This project is spread across 3 go files and is formatted for JetBrains GoLand. The 3 files are globals.go, drawStaff.go
 and this one. The author is strictly a hobbyist who specializes in learning apps of personal interest, sometimes with a
 game-style option. The comments herein reflect the fact that it is highly-unlikely that anyone other than the author will
-ever read them. Three sequential colons ::: causes the rest of a comment line to be highlighted.
+ever read them. Three sequential colons: ::: causes the rest of a comment line to be highlighted.
 */
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
-
+	tryThatAgain = false
 	for {
 		// Get the next random note
 		note :=
@@ -56,6 +56,10 @@ func main() {
 	}
 }
 
+/*
+.
+*/
+
 // NewRandomNote generates a random note
 func NewRandomNote() Note { // Returns a simple struct; refer to Note's definition for details ::: - -
 	pitches := []string{"A6",
@@ -64,10 +68,20 @@ func NewRandomNote() Note { // Returns a simple struct; refer to Note's definiti
 		"G3", "F3", "E3", "D3", "C3", "B3", "A3",
 		"G2", "F2"}
 	//  24 pitches in the slice ...
-	r := rand.Intn(24)             // ... so, also 24 random indexes for the pitches slice
-	return Note{Pitch: pitches[r]} // Pitch is a member of the Note struct ...
-	// ... this says: make a Note type with its Pitch field set to pitches[r], and return that to the caller.
+	if tryThatAgain {
+		tryThatAgain = false
+		return Note{Pitch: pitches[rememberLastPick]} // ::: force player to answer correctly
+	} else {
+		r := rand.Intn(24) // ... so, also 24 random indexes for the pitches slice
+		rememberLastPick = r
+		return Note{Pitch: pitches[r]} // Pitch is a member of the Note struct ...
+		// ... this says: make a Note type with its Pitch field set to pitches[r], and return that to the caller.
+	}
 }
+
+/*
+.
+*/
 
 // Quiz process the player's response, track time, return results: (isCorrect, shouldQuit, outlierAdded)
 func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) { // ::: - -
@@ -123,12 +137,17 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 	outlierAdded := false
 
 	// Test the player's guess
+	// ::: Correct
 	if strings.ToUpper(answer) == pitch {
 		DrawStaff(note, false, true) // redraw the staff with the note shown in green to signify a correct guess.
 		if elapsedMs <= 13000 {      // 13 seconds threshold
 			s.TotalCorrectMs += elapsedMs
 			s.CorrectCount++
 			s.AvgCorrectSec = float64(s.TotalCorrectMs) / float64(s.CorrectCount) / 1000.0
+		} else if elapsedMs < 1000 { // 1000=1.00s ::: 1.00s because time.Sleep is 1.00s
+			fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)
+			outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
+			tryThatAgain = true // because even though it was correct, it was pure luck (answered prior to the query)
 		} else {
 			// The player took a long time to get it right, so log it as an outlier and set a flag to nudge the player for being pokey.
 			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec}) // add some literals to a slice
@@ -136,20 +155,22 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 		}
 		stats[note.Pitch] = s
 		return true, false, outlierAdded // ::: in any case we bail if answer == pitch
-	}
-
-	// Check for fast miss outlier ::: player definitely got this one wrong
-	if elapsedMs < 2100 { // 2.1 seconds
-		fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)
-		*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec}) // essential pointer magic here...
-		// Without pointer magic: outliers := append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec})
-		// ... append by itself (without any pointer magic) would just make an appended copy
-		// ... outliers naked is just a memory address which contains another memory address (to a value)
-		// outliers is a global var of type []Outlier
-		outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
-	} else {
-		DrawStaff(note, false, false) // Re-draw the staff with the note highlighted in Yellow + correction !
-		s.Misses++
+	} else { // ::: Wrong
+		// Check for fast miss outlier
+		if elapsedMs < 1090 { // 2100 = 2.1 seconds, 700 = 0.7s, 1090 = 1.09s ::: 1.09s because time.Sleep is 1.0s
+			fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)
+			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec}) // essential pointer magic here...
+			// Without pointer magic: outliers := append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec})
+			// ... append by itself (without any pointer magic) would just make an appended copy
+			// ... outliers naked is just a memory address which contains another memory address (to a value)
+			// outliers is a global var of type []Outlier
+			outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
+			tryThatAgain = true
+		} else {
+			DrawStaff(note, false, false) // Re-draw the staff with the note highlighted in Yellow + correction !
+			s.Misses++
+			tryThatAgain = true
+		}
 	}
 	stats[note.Pitch] = s // update the stats map at Key = note.Pitch; update it with the "s" structure, remembering that s := stats[note.Pitch] ...
 	// ... and stats is a map of the form map[string]NoteStats

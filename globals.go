@@ -1,7 +1,9 @@
 package main
 
 // Create two global int vars, initialized to 0
-var correct, total int
+var correct, total, rememberLastPick int
+
+var tryThatAgain bool
 
 // ANSI color codes being assigned to constant string-like user-defined reserved words.
 const (
