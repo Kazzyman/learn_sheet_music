@@ -22,7 +22,6 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 		"  ------------------", // (E4)
 		"                    ", // (D4)
 		"        ------ ",      // (C4)
-		// todo ::: figure out how to insert an extra blank line here
 		"                    ", // (B4)
 		"  ------------------", // (A4)  4th octave starts on A and runs through G
 		"                    ", // (G3)
@@ -54,9 +53,8 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 
 	if prompting {
 		/*
-			// place the note on the staff -- ::: insert the note within the indexed line
-			staff[lineIndex] = staff[lineIndex][:10] + Red + "●" + Reset + staff[lineIndex][11:]
-			fmt.Println(strings.Join(staff, "\n"))
+				When prompting, we need to print the lines of the staff one at a time so that we can
+			insert an extra line between the treble and bass clefts.
 		*/
 		// place the note on the staff -- ::: insert the note within the indexed line
 		staff[lineIndex] = staff[lineIndex][:10] + Red + "●" + Reset + staff[lineIndex][11:]
@@ -71,9 +69,12 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 			}
 		}
 	} else if correct {
+		// When correct, reprint the staff with the note in green such that it appears that the note has changed color.
 		staff[lineIndex] = staff[lineIndex][:10] + Green + "●" + Reset + staff[lineIndex][11:]
 		fmt.Println(strings.Join(staff, "\n"))
 	} else {
+		// When wrong, reprint the staff with the note in yellow such that it appears that the note has changed color ...
+		// ... and, add the correct note, e.g., E5, next to the yellow note to inform the player of the right answer.
 		staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " " + Reset + staff[lineIndex][11:]
 		fmt.Println(strings.Join(staff, "\n"))
 	}

@@ -47,7 +47,7 @@ func main() {
 
 		// Before looping to obtain the next random note, conditionally notify the player if an outlier occurred
 		if outlierAdded {
-			fmt.Printf("%s That answer will be added to the outlier ledger.%s\n", Green, Reset)
+			fmt.Printf("%s That answer was added to the outlier ledger.%s\n", Green, Reset)
 		}
 
 		// Pause for a bit before re-prompting the player
