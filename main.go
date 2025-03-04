@@ -9,23 +9,32 @@ import (
 	"time"
 )
 
+/*
+This project is spread across 3 go files and is formatted for JetBrains GoLand. The 3 files are globals.go, drawStaff.go
+and this one. The author is strictly a hobbyist who specializes in learning apps of personal interest, sometimes with a
+game-style option. The comments herein reflect the fact that it is highly-unlikely that anyone other than the author will
+ever read them. Three sequential colons ::: causes the rest of a comment line to be highlighted.
+*/
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
-	// Rick knows about options such as: s, o, and q, so no need to bother printing then to the terminal
 
 	for {
 		// Get the next random note
-		note := NewRandomNote() // NewRandomNote() returns a simple struct, i.e. custom type Note.
-		// Refer to the type definition in globals.go for why it is done this way.
+		note :=
+			NewRandomNote() // NewRandomNote() returns a simple struct, i.e. custom type Note ...
+		// ... refer to the type definition in globals.go for why it is done this way.
 
 		// Quiz :: process a single question, track time, and return result: isCorrect, shouldQuit, outlierAdded
-		isCorrect, shouldQuit, outlierAdded := Quiz(note, stats, &outliers) // "&outliers" gets a pure and simple pointer
-		// ... the above is a good example of passing by pointer.
+		isCorrect, shouldQuit, outlierAdded :=
+			Quiz(note, stats, &outliers) // "&outliers" gets a pure and simple pointer
+		// ... the above is a good example of passing by pointer, &outliers evaluates|resolves to a pointer.
+		// Notice that since stats is a map, and therefore of reference type, there is no need to pass it by pointer.
+
 		if shouldQuit {
 			fmt.Printf("Final Score: %d/%d (%.1f%%)\n", correct, total, float64(correct)/float64(total)*100)
 			PrintStats(stats)
 			printOutliers(outliers)
-			break
+			break // The only exit point for the app
 		}
 
 		// Tally, calculate, and print the current score
@@ -42,8 +51,8 @@ func main() {
 		}
 
 		// Pause for a bit before re-prompting the player
-		// time.Sleep(1 * time.Second) // optionally set to a fraction or multiple of one second 
-		time.Sleep(time.Second) // one second 
+		// time.Sleep(1.5 * time.Second) // optionally set to a fraction or multiple of one second
+		time.Sleep(time.Second) // one second
 	}
 }
 
@@ -54,43 +63,44 @@ func NewRandomNote() Note { // Returns a simple struct; refer to Note's definiti
 		"G4", "F4", "E4", "D4", "C4", "B4", "A4",
 		"G3", "F3", "E3", "D3", "C3", "B3", "A3",
 		"G2", "F2"}
-	//  24 pitches in the slice
-	r := rand.Intn(24)             // so, also 24 random indexes for the pitches slice
+	//  24 pitches in the slice ...
+	r := rand.Intn(24)             // ... so, also 24 random indexes for the pitches slice
 	return Note{Pitch: pitches[r]} // Pitch is a member of the Note struct ...
-	// ... this says: make a Note var with its Pitch field set to pitches[r], and return that to the caller.
+	// ... this says: make a Note type with its Pitch field set to pitches[r], and return that to the caller.
 }
 
-// Quiz process the question, track time, return results: (isCorrect, shouldQuit, outlierAdded)
+// Quiz process the player's response, track time, return results: (isCorrect, shouldQuit, outlierAdded)
 func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) { // ::: - -
 	/*
 		Usage of the Note type instead of a simple string is explained in the globals.go file.
-		&outliers makes a pointer to the slice, so Quiz gets *[]Outlier as a parameter (a pointer).
+		&outliers makes a pointer to a slice of structures, so Quiz gets *[]Outlier as a parameter (a pointer).
 		*[]Outlier is a pointer to that slice; the * de-references, while pointing, resulting in the slice, not just ...
 		... the pointer itself. Why do this? Because passing outliers []Outlier would give us a copy rather than the original.
 		Here outliers *[]Outlier gives us the outliers "out there", whereas if we had used outliers []Outlier we'd get a local
-		copy of that outside world.
+		copy of the object (in this case a slice of structures) in the outside world and persistence would be lost.
 		"go" always passes by value, "exception": maps are reference types, so maps are kinda pseudo pointers by default.
 	*/
 
 	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
 
-	fmt.Println("What note is this? (or give a directive: s, o, q etc.)\n")
-	fmt.Println(DrawStaff(note)) // DrawStaff is passed Pitch via a type Note
-	fmt.Print("Guess: ")
+	fmt.Println("Identify the note below (or give a directive: s, o, q etc.)\n")
+	// DrawStaff is passed Pitch via a Note type struct
+	DrawStaff(note, true, true) // prompting true causes a normal display of the staff
+	fmt.Print("Guess: ")        // Prompt the player for a guess.
 
-	// Obtain player's answer, on the clock
+	// Obtain player's answer, "on the clock"
 	start := time.Now()                           // start the clock
 	answer, _ := reader.ReadString('\n')          // obtain the player's guess
 	elapsedMs := time.Since(start).Milliseconds() // stop the clock
 	elapsedSec := float64(elapsedMs) / 1000.0     // recast time to a float, and convert Ms to sec
 	answer = strings.TrimSpace(answer)            // trim the answer (essential)
 
-	// Three ways to return to the main loop
+	// Three ways to return early to the main loop
 	if strings.ToLower(answer) == "q" {
 		return false, true, false // (isCorrect, shouldQuit, outlierAdded)
 	}
 	if strings.ToLower(answer) == "o" {
-		printOutliers(*outliers)
+		printOutliers(*outliers)   // printOutliers expects a slice of structures : type []Outlier
 		return false, false, false // Continue, no score change, no outlier
 	}
 	if strings.ToLower(answer) == "s" {
@@ -98,52 +108,55 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 		return false, false, false // Continue, no score change, no outlier
 	}
 
-	pitch := note.Pitch // the note struct was
-	pitch = strings.TrimRight(pitch, "23456")
+	pitch := note.Pitch                       // note.Pitch will eval to a note+octave couplet, such as C4, which needs trimming ...
+	pitch = strings.TrimRight(pitch, "23456") // 2-6 are octave suffixes of the various staff notes ...
+	// ... and comprise here a "cut-set" which strings.TrimRight uses to know where and when to do its trimming.
 
-	// "stats" was passed-in as map[string]NoteStats // a map of key:string, NoteStats pairs
-	s := stats[note.Pitch] // "Pitch" is a field/member of the Note struct (internally: note) ...
+	// "stats" was passed-in as map[string]NoteStats -- a map of key-As-String+NoteStats pairs
+	s := stats[note.Pitch] // "Pitch" is a field/member of the Note struct (locally: note) ...
 	// ... stats[note.Pitch] obtains the NoteStats struct "indexed" by the Key string: note.Pitch
-	// therefore, "s" is created as a NoteStats object.
+	// ::: therefore, "s" is created as a NoteStats object.
 	// Here "note" is actually a Note struct (because it was passed into this func as such)
 	// "stats" is a map, a correspondence between pitch (a string) and a NoteStats struct
 
 	s.Attempts++ // increment the Attempts field/member of the current (specific) NoteStats struct
 	outlierAdded := false
+
+	// Test the player's guess
 	if strings.ToUpper(answer) == pitch {
-		fmt.Printf("%sCorrect!%s\n", Green, Reset) // todo::: move this into a reprint of staff
-		if elapsedMs <= 13000 {                    // 13 seconds threshold
+		DrawStaff(note, false, true) // redraw the staff with the note shown in green to signify a correct guess.
+		if elapsedMs <= 13000 {      // 13 seconds threshold
 			s.TotalCorrectMs += elapsedMs
 			s.CorrectCount++
 			s.AvgCorrectSec = float64(s.TotalCorrectMs) / float64(s.CorrectCount) / 1000.0
 		} else {
-			//
+			// The player took a long time to get it right, so log it as an outlier and set a flag to nudge the player for being pokey.
 			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec}) // add some literals to a slice
 			outlierAdded = true
 		}
 		stats[note.Pitch] = s
-		return true, false, outlierAdded
+		return true, false, outlierAdded // ::: in any case we bail if answer == pitch
 	}
 
-	// Check for fast miss outlier
+	// Check for fast miss outlier ::: player definitely got this one wrong
 	if elapsedMs < 2100 { // 2.1 seconds
-		fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)                // todo::: move this into a reprint of staff
+		fmt.Printf("%sActually it was %s. (Too fast, not counted)%s\n", Red, pitch, Reset)
 		*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec}) // essential pointer magic here...
 		// Without pointer magic: outliers := append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec})
 		// ... append by itself (without any pointer magic) would just make an appended copy
-		// ... outliers naked is just a memory address which contains another memory address (to a value) 
+		// ... outliers naked is just a memory address which contains another memory address (to a value)
 		// outliers is a global var of type []Outlier
-		outlierAdded = true
+		outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
 	} else {
-		fmt.Printf("%sActually it was %s, specifically %s %s\n", Red, pitch, note.Pitch, Reset) // todo::: move this into a reprint of staff
+		DrawStaff(note, false, false) // Re-draw the staff with the note highlighted in Yellow + correction !
 		s.Misses++
 	}
-	stats[note.Pitch] = s // update the stats map at Key = note.Pitch; update it with the "s" structure, remembering that s := stats[note.Pitch] ... 
+	stats[note.Pitch] = s // update the stats map at Key = note.Pitch; update it with the "s" structure, remembering that s := stats[note.Pitch] ...
 	// ... and stats is a map of the form map[string]NoteStats
-	return false, false, outlierAdded // return three bools 
+	return false, false, outlierAdded // return three bools
 }
 
-// PrintStats shows per-note performance in light blue
+// PrintStats display per-note performance stats
 func PrintStats(stats map[string]NoteStats) {
 	orderedPitches := []string{"A6",
 		"G5", "F5", "E5", "D5", "C5", "B5", "A5",
@@ -151,10 +164,9 @@ func PrintStats(stats map[string]NoteStats) {
 		"G3", "F3", "E3", "D3", "C3", "B3", "A3",
 		"G2", "F2",
 	}
-	// 13 pitches
 	fmt.Printf("%s--- Note Stats ---%s\n", colorYellow, Reset)
-	for _, pitch := range orderedPitches {
-		s := stats[pitch] // 
+	for _, pitch := range orderedPitches { // ::: each loop prints the stats for one note
+		s := stats[pitch] // get the NoteStats for one pitch, from the orderedPitches slice
 		avgTime := "N/A"
 		if s.CorrectCount > 0 {
 			avgTime = fmt.Sprintf("%.3f seconds", s.AvgCorrectSec)
@@ -167,7 +179,7 @@ func PrintStats(stats map[string]NoteStats) {
 	}
 }
 
-// printOutliers displays the outlier ledger in light blue
+// printOutliers displays the outliers ledger
 func printOutliers(outliers []Outlier) {
 	fmt.Printf("%s--- Outlier Ledger ---%s\n", colorYellow, Reset)
 	if len(outliers) == 0 {
@@ -181,57 +193,4 @@ func printOutliers(outliers []Outlier) {
 		}
 		fmt.Printf("%s%d: %s - %s, %.3f seconds%s\n", LightBlue, i+1, o.Pitch, result, o.TimeSec, Reset)
 	}
-}
-
-// DrawStaff generates a five-line ASCII staff with the note placed
-func DrawStaff(note Note) string { // accepts a simple structure of notes ::: - -
-	staff := []string{
-		"        ------ ",      // (A6)  6th octave starts on A and runs through G
-		"                    ", // (G5)
-		"  ------------------", // (F5)
-		"                    ", // (E5)
-		"  ------------------", // (D5)
-		"                    ", // (C5)
-		"  ------------------", // (B5)
-		"                    ", // (A5)  5th octave starts on A and runs through G
-		"  ------------------", // (G4)
-		"                    ", // (F4)
-		"  ------------------", // (E4)
-		"                    ", // (D4)
-		"        ------ ",      // (C4)
-		// somehow we'd like to need/want to skip this space ???
-		"                    ", // (B4)
-		"  ------------------", // (A4)  4th octave starts on A and runs through G
-		"                    ", // (G3)
-		"  ------------------", // (F3)
-		"                    ", // (E3)
-		"  ------------------", // (D3)
-		"                    ", // (C3)
-		"  ------------------", // (B3)
-		"                    ", // (A3) 3erd octave starts on A and runs through G
-		"  ------------------", // (G2)
-		"                    ", // (F2)
-	}
-
-	pitchMap := map[string]int{
-		"A6": 0,
-		"G5": 1, "F5": 2, "E5": 3, "D5": 4, "C5": 5, "B5": 6, "A5": 7,
-		"G4": 8, "F4": 9, "E4": 10, "D4": 11, "C4": 12, "B4": 13, "A4": 14,
-		"G3": 15, "F3": 16, "E3": 17, "D3": 18, "C3": 19, "B3": 20, "A3": 21,
-		"G2": 22, "F2": 23,
-	}
-
-	// obtain an index into the lines of the staff (counting begins at 0)
-	lineIndex, exists := pitchMap[note.Pitch] // use a random note as an index|key into pitchMap
-
-	// handle error
-	// fmt.Printf("\nlineIndex: %d, exists: %t\n", lineIndex, exists)
-	if !exists { // if the value of exists is false
-		fmt.Printf("\nlineIndex: %d, exists-not: %t\n", lineIndex, exists)
-		return "Invalid pitch" // return early without a staff line
-	}
-
-	// place the note on the staff
-	staff[lineIndex] = staff[lineIndex][:10] + Red + "●" + Reset + staff[lineIndex][11:]
-	return strings.Join(staff, "\n") // returns a line with an embedded note
 }
