@@ -252,11 +252,11 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 
 // PrintStats display per-note performance stats
 func PrintStats(stats map[string]NoteStats) {
-	orderedPitches := []string{"A6",
-		"G5", "F5", "E5", "D5", "C5", "B5", "A5",
-		"G4", "F4", "E4", "D4", "C4", "B4", "A4",
-		"G3", "F3", "E3", "D3", "C3", "B3", "A3",
-		"G2", "F2",
+	orderedPitches := []string{"A5",
+		"G5", "F5", "E5", "D5", "C5",
+		"B4", "A4", "G4", "F4", "E4", "D4", "C4",
+		"B3", "A3", "G3", "F3", "E3", "D3", "C3",
+		"B2", "A2", "G2", "F2",
 	}
 	fmt.Printf("%s--- Note Stats ---%s\n", colorYellow, Reset)
 	for _, pitch := range orderedPitches { // ::: each loop prints the stats for one note

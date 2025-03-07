@@ -1,24 +1,18 @@
 package main
 
 var pitchesAll = []string{
-	"A6",
-	"G5", "F5", "E5", "D5", "C5", "B5", "A5",
-	"G4", "F4", "E4", "D4",
-	"C4",
-	"B4", "A4",
-	"G3", "F3", "E3", "D3", "C3", "B3", "A3",
-	"G2", "F2",
+	"A5", "G5", "F5", "E5", "D5", "C5",
+	"B4", "A4", "G4", "F4", "E4", "D4", "C4",
+	"B3", "A3", "G3", "F3", "E3", "D3", "C3",
+	"B2", "A2", "G2", "F2",
 }
 var pitchesLeft = []string{
-	"B4", "A4",
-	"G3", "F3", "E3", "D3", "C3", "B3", "A3",
-	"G2", "F2",
+	"B3", "A3", "G3", "F3", "E3", "D3", "C3",
+	"B2", "A2", "G2", "F2",
 }
 var pitchesRight = []string{
-	"A6",
-	"G5", "F5", "E5", "D5", "C5", "B5", "A5",
-	"G4", "F4", "E4", "D4",
-	"C4",
+	"A5", "G5", "F5", "E5", "D5", "C5",
+	"B4", "A4", "G4", "F4", "E4", "D4", "C4",
 }
 
 // Create two global int vars, initialized to 0

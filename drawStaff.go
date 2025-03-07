@@ -8,38 +8,37 @@ import (
 func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple structure of notes ::: - -
 	// First we make an slice of strings, one string for each staff line
 	staff := []string{
-		"        ------ ",      // 1 (A6)  6th octave starts on A and runs through G
+		"        ------ ",      // 1 (A5)
 		"                    ", // 2 (G5)
 		"  ------------------", // 3 (F5)
 		"                    ", // 4 (E5)
 		"  ------------------", // 5 (D5)
-		"                    ", // 6 (C5)
-		"  ------------------", // 7 (B5)
-		"                    ", // 8 (A5)  5th octave starts on A and runs through G
+		"                    ", // 6 (C5) --------- 5th octave starts on C and runs through B
+		"  ------------------", // 7 (B4)
+		"                    ", // 8 (A4)
 		"  ------------------", // 9 (G4)
 		"                    ", // 10(F4)
 		"  ------------------", // 11(E4)
 		"                    ", // 12(D4)
-		"        ------ ",      // 13(C4)
-		"                    ", // 14(B4)                                  A & B are ::: pattern breakers
-		"  ------------------", // 15(A4)  4th octave starts on A and runs through G ::: pattern breaker A
+		"        ------ ",      // 13(C4) ======  4th octave starts on C and runs through B
+		"                    ", // 14(B3)  A & B are ::: pattern breakers
+		"  ------------------", // 15(A3)           ::: pattern breaker A
 		"                    ", // 16 (G3)
 		"  ------------------", // (F3)
 		"                    ", // (E3)
 		"  ------------------", // (D3)
-		"                    ", // (C3)
-		"  ------------------", // (B3)
-		"                    ", // (A3) 3erd octave starts on A and runs through G
+		"                    ", // (C3) --------- 3erd octave starts on C and runs through B
+		"  ------------------", // (B2)
+		"                    ", // (A2)
 		"  ------------------", // (G2)
 		"                    ", // (F2)
 	}
 
 	pitchMap := map[string]int{
-		"A6": 0,
-		"G5": 1, "F5": 2, "E5": 3, "D5": 4, "C5": 5, "B5": 6, "A5": 7,
-		"G4": 8, "F4": 9, "E4": 10, "D4": 11, "C4": 12, "B4": 13, "A4": 14,
-		"G3": 15, "F3": 16, "E3": 17, "D3": 18, "C3": 19, "B3": 20, "A3": 21,
-		"G2": 22, "F2": 23,
+		"A5": 0, "G5": 1, "F5": 2, "E5": 3, "D5": 4, "C5": 5,
+		"B4": 6, "A4": 7, "G4": 8, "F4": 9, "E4": 10, "D4": 11, "C4": 12,
+		"B3": 13, "A3": 14, "G3": 15, "F3": 16, "E3": 17, "D3": 18, "C3": 19,
+		"B2": 20, "A2": 21, "G2": 22, "F2": 23,
 	}
 
 	// ::: obtain an index into the lines of the staff (counting begins at 0)
