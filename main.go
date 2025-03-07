@@ -30,8 +30,17 @@ Progress and scoring is shown during play.
  */
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
+	fmt.Println("Identify the note below (or give a directive: s, o, q etc.)\n")
+
 	tryThatAgain = false // When the player commits an error, the player is forced to try that note again
 	for {
+
+		// Print the current score
+		if total > 0 {
+			percent := float64(correct) / float64(total) * 100
+			fmt.Printf("%sScore: %d/%d (%.1f%%)\n%s\n", colorCyan, correct, total, percent, Reset)
+		}
+		
 		// Get the next random note
 		note :=
 			NewRandomNote() // NewRandomNote() returns a simple struct, i.e. custom type Note ...
@@ -56,20 +65,17 @@ func main() {
 			break // The only exit point for the app
 		}
 
-		// Print the current score
-		percent := float64(correct) / float64(total) * 100
-		fmt.Printf("Score: %d/%d (%.1f%%)\n", correct, total, percent)
-
 		// Before looping to obtain the next random note, conditionally notify the player if an outlier occurred
 		if outlierAdded {
 			fmt.Printf("%s That answer was added to the outlier ledger.%s\n", Green, Reset)
 		}
 
 		// Pause for a bit before re-prompting the player
-		// time.Sleep(1.5 * time.Second) // optionally set to a fraction or multiple of one second
-		time.Sleep(time.Second) // one second
+		time.Sleep(time.Second / 4) // one second
 	}
 }
+
+var half int64
 
 /*
 .
@@ -114,7 +120,6 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 
 	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
 
-	fmt.Println("Identify the note below (or give a directive: s, o, q etc.)\n")
 	// DrawStaff is passed Pitch via a Note type struct
 	DrawStaff(note, true, true) // prompting true causes a normal display of the staff
 	fmt.Print("Guess: ")        // Prompt the player for a guess.

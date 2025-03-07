@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 // DrawStaff generates a twelve-line, twelve-space ASCII staff with a note placed in Red
@@ -72,7 +71,16 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 		// ... and includes note.Pitch -- the player should adjust the terminal view scale to allow full view of prior staff
 	} else if correct { // ::: Correct case !!
 		staff[lineIndex] = staff[lineIndex][:10] + Green + "●" + note.Pitch + Reset + staff[lineIndex][11:]
-		fmt.Println(strings.Join(staff, "\n")) // Print all the lines in one go
+		lineCounter := 0
+		for _, oneOfThe25Lines := range staff {
+			fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, indexed
+			lineCounter++
+			if lineCounter > 24 {
+				return
+			} else if lineCounter == 14 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
+				fmt.Println()
+			}
+		}
 		tryThatAgain = false
 	} else { // ::: Wrong case !!
 		// When wrong, reprint the staff with the note in yellow such that it appears that the note has changed color ...
@@ -93,6 +101,8 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 			if lineCounter > 24 {
 				tryThatAgain = true
 				return
+			} else if lineCounter == 14 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
+				fmt.Println()
 			}
 		}
 	}
