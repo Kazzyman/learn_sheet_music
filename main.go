@@ -163,12 +163,16 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 			tryThatAgain = true // because even though it was correct, it was pure luck (answered prior to the query)
 		} else {
 			// The player took a long time to get it right, so log it as an outlier and set a flag to nudge the player for being pokey.
-			fmt.Printf("Too slow, therefore ... ")
+			fmt.Printf("%sToo slow%s, therefore ... ", colorYellow, Reset)
 			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec}) // add some literals to a slice
 			outlierAdded = true
 		}
 		stats[note.Pitch] = s
-		return true, false, outlierAdded // ::: in any case we bail if answer == pitch
+		if elapsedMs > 1089 && elapsedMs <= 13000 { // is good, was not too fast, and not too slow
+			return true, false, outlierAdded // ::: in any case we return if answer == pitch
+		} else {
+			return false, false, outlierAdded // ::: in any case we return if answer == pitch
+		}
 	} else { // ::: Wrong
 		// Check for fast miss outlier
 		if elapsedMs < 1090 { // 2100 = 2.1 seconds, 700 = 0.7s, 1090 = 1.09s ::: 1.09s because time.Sleep is 1.0s
