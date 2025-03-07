@@ -73,8 +73,13 @@ func main() {
 			fmt.Printf("%s That answer was added to the outlier ledger.%s\n", Green, Reset)
 		}
 
-		// Pause for a bit before re-prompting the player
-		time.Sleep(time.Second / 4) // one second
+		if givenCreditForCorrectAnswer {
+			// Pause for a bit before re-prompting the player
+			time.Sleep(time.Second / 4) // one second / 4 ; or one quarter second
+		} else {
+			time.Sleep(time.Second * 2)
+		}
+
 	}
 }
 
@@ -84,7 +89,7 @@ func main() {
 
 // NewRandomNote generates a random note
 func NewRandomNote() Note { // Returns a simple struct; refer to Note's definition for details ::: - -
-	// ::: force player to answer correctly
+	// ::: force player to answer correctly prior to being given a new novel note to guess
 	if tryThatAgain {
 		tryThatAgain = false
 		if left {
@@ -127,7 +132,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 		copy of the object (in this case a slice of structures) in the outside world and persistence would be lost.
 		"go" always passes by value, "exception": maps are reference types, so maps are kinda pseudo pointers by default.
 	*/
-	givenCreditForCorrectAnswer := false
+	// ::: givenCreditForCorrectAnswer := false
 	shouldQuit := false
 
 	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
@@ -136,18 +141,31 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	// DrawStaff is used to prompt ::: ONLY here!
 	DrawStaff(note, true, true) // prompting true causes a normal display of the staff
 
-	// Prompt three ways: Lower cleft, Right-hand cleft, or the entire Grand staff:
-	if left {
-		fmt.Print("Guess-L: ") // Prompt the player for a guess in the lower staff.
-	} else if right {
-		fmt.Print("Guess-R: ") // Prompt the player for a guess in the upper staff.
+	if !givenCreditForCorrectAnswer {
+		// Prompt three ways: Lower cleft, Right-hand cleft, or the entire Grand staff:
+		if left {
+			fmt.Print("Again; Guess-L: ") // Prompt the player for a guess in the lower staff.
+		} else if right {
+			fmt.Print("Again; Guess-R: ") // Prompt the player for a guess in the upper staff.
+		} else {
+			fmt.Print("Again; Guess: ") // Prompt the player for a guess throughout the entire staff.
+		}
 	} else {
-		fmt.Print("Guess: ") // Prompt the player for a guess throughout the entire staff.
+		// Prompt three ways: Lower cleft, Right-hand cleft, or the entire Grand staff:
+		if left {
+			fmt.Print("Guess-L: ") // Prompt the player for a guess in the lower staff.
+		} else if right {
+			fmt.Print("Guess-R: ") // Prompt the player for a guess in the upper staff.
+		} else {
+			fmt.Print("Guess: ") // Prompt the player for a guess throughout the entire staff.
+		}
 	}
+
+	givenCreditForCorrectAnswer = false
 
 	// Obtain player's answer, "on the clock"
 	start := time.Now()                           // start the clock
-	answer, _ := reader.ReadString('\n')          // obtain the player's guess
+	answer, _ = reader.ReadString('\n')           // obtain the player's guess
 	elapsedMs := time.Since(start).Milliseconds() // stop the clock
 	elapsedSec := float64(elapsedMs) / 1000.0     // recast time to a float, and convert Ms to sec
 	answer = strings.TrimSpace(answer)            // trim the answer (essential)
@@ -182,7 +200,12 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	}
 	//
 	if strings.ToLower(answer) == "dir" {
-		fmt.Println("directives: L, R, all, S, O, Q)\n")
+		fmt.Println("directives: L, R, all, S, O, Q, show)\n")
+		total--
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
+	}
+	if strings.ToLower(answer) == "show" {
+		fmt.Println(showStaff)
 		total--
 		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}

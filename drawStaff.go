@@ -6,6 +6,7 @@ import (
 
 // DrawStaff generates a twelve-line, twelve-space ASCII staff with a note placed in Red
 func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple structure of notes ::: - -
+
 	// First we make an slice of strings, one string for each staff line
 	staff := []string{
 		"        ------ ",      // 1 (A5)
@@ -33,7 +34,6 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 		"  ------------------", // (G2)
 		"                    ", // (F2)
 	}
-
 	pitchMap := map[string]int{
 		"A5": 0, "G5": 1, "F5": 2, "E5": 3, "D5": 4, "C5": 5,
 		"B4": 6, "A4": 7, "G4": 8, "F4": 9, "E4": 10, "D4": 11, "C4": 12,
@@ -50,6 +50,7 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 	}
 
 	if prompting {
+		fmt.Println(showStaff)
 		/*
 				When prompting, we need to print the lines of the staff one at a time so that we can
 			insert an extra line between the treble and bass clefts.
@@ -97,8 +98,9 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 		for _, oneOfThe25Lines := range staff {
 			fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, per indexed
 			lineCounter++
-			if lineCounter > 24 {
+			if lineCounter >= 24 {
 				tryThatAgain = true
+				fmt.Printf("%sYour guess was: %s  %s", Red, answer, Reset) // ::: fix to answer
 				return
 			} else if lineCounter == 14 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
 				fmt.Println()

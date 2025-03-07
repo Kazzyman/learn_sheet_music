@@ -15,10 +15,41 @@ var pitchesRight = []string{
 	"B4", "A4", "G4", "F4", "E4", "D4", "C4",
 }
 
+// First we make an slice of strings, one string for each staff line
+// staff := []string{
+var showStaff = []string{
+	"        ---a--- \n",      // 1 (A5)
+	"              G      \n", // 2 (G5)
+	"  ---------f---------\n", // 3 (F5)
+	"              E      \n", // 4 (E5)
+	"  ---------d---------\n", // 5 (D5)
+	"              C      \n", // 6 (C5) --------- 5th octave starts on C and runs through B
+	"  ---------b---------\n", // 7 (B4)
+	"              A      \n", // 8 (A4)
+	"  ---------g---------\n", // 9 (G4)
+	"              F      \n", // 10(F4)
+	"  ---------e---------\n", // 11(E4)
+	"              D      \n", // 12(D4)
+	"        ---c--- \n\n",    // 13(C4) ======  4th octave starts on C and runs through B
+	"              B      \n", // 14(B3)  A & B are ::: two steps up from G would be B
+	"  ---------a---------\n", // 15(A3)           ::: two steps up from F would be A
+	"              G      \n", // 16 (G3)
+	"  ---------f---------\n", // (F3)
+	"              E      \n", // (E3)
+	"  ---------d---------\n", // (D3)
+	"              C      \n", // (C3) --------- 3erd octave starts on C and runs through B
+	"  ---------b---------\n", // (B2)
+	"              A      \n", // (A2)
+	"  ---------g---------\n", // (G2)
+	"              F      \n", // (F2)
+}
+
 // Create two global int vars, initialized to 0
 var correct, total, rememberLastPickL, rememberLastPickR, rememberLastPickAll int
 
-var tryThatAgain, left, right bool
+var tryThatAgain, left, right, givenCreditForCorrectAnswer bool
+
+var answer string
 
 // ANSI color codes being assigned to constant string-like user-defined reserved words.
 const (
