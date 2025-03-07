@@ -30,18 +30,24 @@ Progress and scoring is shown during play.
  */
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
-	tryThatAgain = false
+	tryThatAgain = false // When the player commits an error, the player is forced to try that note again
 	for {
 		// Get the next random note
 		note :=
 			NewRandomNote() // NewRandomNote() returns a simple struct, i.e. custom type Note ...
 		// ... refer to the type definition in globals.go for why it is done this way.
 
-		// Quiz :: process a single question, track time, and return result: isCorrect, shouldQuit, outlierAdded
-		isCorrect, shouldQuit, outlierAdded :=
+		// Quiz :: process a single question, track time, and return 3 bool results
+		givenCreditForCorrectAnswer, shouldQuit, outlierAdded :=
 			Quiz(note, stats, &outliers) // "&outliers" gets a pure and simple pointer
 		// ... the above is a good example of passing by pointer, &outliers evaluates|resolves to a pointer.
 		// Notice that since stats is a map, and therefore of reference type, there is no need to pass it by pointer.
+
+		// Calculate the current score
+		if givenCreditForCorrectAnswer {
+			correct++ // Global
+		}
+		total++ // Global
 
 		if shouldQuit {
 			fmt.Printf("Final Score: %d/%d (%.1f%%)\n", correct, total, float64(correct)/float64(total)*100)
@@ -50,11 +56,7 @@ func main() {
 			break // The only exit point for the app
 		}
 
-		// Tally, calculate, and print the current score
-		if isCorrect {
-			correct++
-		}
-		total++
+		// Print the current score
 		percent := float64(correct) / float64(total) * 100
 		fmt.Printf("Score: %d/%d (%.1f%%)\n", correct, total, percent)
 
@@ -96,8 +98,8 @@ func NewRandomNote() Note { // Returns a simple struct; refer to Note's definiti
 .
 */
 
-// Quiz process the player's response, track time, return results: (isCorrect, shouldQuit, outlierAdded)
-func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) { // ::: - -
+// Quiz process the player's response, track time, return results: (givenCreditForCorrectAnswer, shouldQuit, outlierAdded)
+func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) { // ::: - -
 	/*
 		Usage of the Note type instead of a simple string is explained in the globals.go file.
 		&outliers makes a pointer to a slice of structures, so Quiz gets *[]Outlier as a parameter (a pointer).
@@ -107,6 +109,8 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 		copy of the object (in this case a slice of structures) in the outside world and persistence would be lost.
 		"go" always passes by value, "exception": maps are reference types, so maps are kinda pseudo pointers by default.
 	*/
+	givenCreditForCorrectAnswer := false
+	shouldQuit := false
 
 	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
 
@@ -124,29 +128,31 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 
 	// Three ways to return early to the main loop
 	if strings.ToLower(answer) == "q" {
-		return false, true, false // (isCorrect, shouldQuit, outlierAdded)
+		shouldQuit = true
+		return givenCreditForCorrectAnswer, shouldQuit, false // (isCorrect, shouldQuit, outlierAdded)
 	}
 	if strings.ToLower(answer) == "o" {
-		printOutliers(*outliers)   // printOutliers expects a slice of structures : type []Outlier
-		return false, false, false // Continue, no score change, no outlier
+		printOutliers(*outliers)                              // printOutliers expects a slice of structures : type []Outlier
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
 	if strings.ToLower(answer) == "s" {
-		PrintStats(stats)
-		return false, false, false // Continue, no score change, no outlier
+		PrintStats(mapOfNoteStats)
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
 
 	pitch := note.Pitch                       // note.Pitch will eval to a note+octave couplet, such as C4, which needs trimming ...
 	pitch = strings.TrimRight(pitch, "23456") // 2-6 are octave suffixes of the various staff notes ...
 	// ... and comprise here a "cut-set" which strings.TrimRight uses to know where and when to do its trimming.
 
-	// "stats" was passed-in as map[string]NoteStats -- a map of key-As-String+NoteStats pairs
-	s := stats[note.Pitch] // "Pitch" is a field/member of the Note struct (locally: note) ...
-	// ... stats[note.Pitch] obtains the NoteStats struct "indexed" by the Key string: note.Pitch
-	// ::: therefore, "s" is created as a NoteStats object.
+	// "mapOfNoteStats" was passed-in as map[string]NoteStats -- a map of key-As-String+NoteStats pairs
+	CurentNoteStatsObject := mapOfNoteStats[note.Pitch] // "Pitch" is a field/member of the Note struct (locally: note) ...
+	// ... mapOfNoteStats[note.Pitch] obtains the NoteStats struct "indexed" by the Key string: note.Pitch
+	// ... it says: give me the NoteStats in the map of NoteStats at Pitch in the map
+	// ::: therefore, "CurentNoteStatsObject" is created as a NoteStats object.
 	// Here "note" is actually a Note struct (because it was passed into this func as such)
-	// "stats" is a map, a correspondence between pitch (a string) and a NoteStats struct
+	// "mapOfNoteStats" is a map, a correspondence between pitch (a string) and a NoteStats struct
 
-	s.Attempts++ // increment the Attempts field/member of the current (specific) NoteStats struct
+	CurentNoteStatsObject.Attempts++ // increment the Attempts field/member of the current (specific) NoteStats struct
 	outlierAdded := false
 
 	// Test the player's guess
@@ -154,9 +160,9 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 	if strings.ToUpper(answer) == pitch {
 		DrawStaff(note, false, true) // redraw the staff with the note shown in green to signify a correct guess.
 		if elapsedMs <= 13000 {      // 13 seconds threshold
-			s.TotalCorrectMs += elapsedMs
-			s.CorrectCount++
-			s.AvgCorrectSec = float64(s.TotalCorrectMs) / float64(s.CorrectCount) / 1000.0
+			CurentNoteStatsObject.TotalCorrectMs += elapsedMs
+			CurentNoteStatsObject.CorrectCount++
+			CurentNoteStatsObject.AvgCorrectSec = float64(CurentNoteStatsObject.TotalCorrectMs) / float64(CurentNoteStatsObject.CorrectCount) / 1000.0
 		} else if elapsedMs < 1090 { // 1000=1.00s ::: 1.00s because time.Sleep is 1.09s
 			fmt.Printf("%sIt was %s. (but too fast, answer given prior to query being shown, not counted)%s\n", Red, pitch, Reset)
 			outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
@@ -167,11 +173,13 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec}) // add some literals to a slice
 			outlierAdded = true
 		}
-		stats[note.Pitch] = s
+		mapOfNoteStats[note.Pitch] = CurentNoteStatsObject
 		if elapsedMs > 1089 && elapsedMs <= 13000 { // is good, was not too fast, and not too slow
-			return true, false, outlierAdded // ::: in any case we return if answer == pitch
+			givenCreditForCorrectAnswer = true
+			return givenCreditForCorrectAnswer, shouldQuit, outlierAdded // ::: in any case we return if answer == pitch
 		} else {
-			return false, false, outlierAdded // ::: in any case we return if answer == pitch
+			givenCreditForCorrectAnswer = false
+			return givenCreditForCorrectAnswer, shouldQuit, outlierAdded // ::: in any case we return if answer == pitch
 		}
 	} else { // ::: Wrong
 		// Check for fast miss outlier
@@ -186,13 +194,13 @@ func Quiz(note Note, stats map[string]NoteStats, outliers *[]Outlier) (bool, boo
 			tryThatAgain = true
 		} else {
 			DrawStaff(note, false, false) // Re-draw the staff with the note highlighted in Yellow + correction !
-			s.Misses++
+			CurentNoteStatsObject.Misses++
 			tryThatAgain = true
 		}
 	}
-	stats[note.Pitch] = s // update the stats map at Key = note.Pitch; update it with the "s" structure, remembering that s := stats[note.Pitch] ...
-	// ... and stats is a map of the form map[string]NoteStats
-	return false, false, outlierAdded // return three bools
+	mapOfNoteStats[note.Pitch] = CurentNoteStatsObject // update the mapOfNoteStats map at Key = note.Pitch; update it with the "s" structure, remembering that s := mapOfNoteStats[note.Pitch] ...
+	// ... and mapOfNoteStats is a map of the form map[string]NoteStats
+	return givenCreditForCorrectAnswer, shouldQuit, outlierAdded // return three bools: givenCreditForCorrectAnswer, shouldQuit, outlierAdded
 }
 
 // PrintStats display per-note performance stats
