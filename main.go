@@ -30,17 +30,20 @@ Progress and scoring is shown during play.
  */
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
-	fmt.Println("Identify the note below (or give a directive: s, o, q etc.)\n")
+	fmt.Println("Identify the note below (or give a directive: L, R, all, S, O, Q, or dir.)\n")
+
+	left = false  // When both are false it signifies we are being prompted on the entire Grand staff ...
+	right = false // ... left: Lower; right: upper, or right-hand notes
 
 	tryThatAgain = false // When the player commits an error, the player is forced to try that note again
-	for {
 
+	for {
 		// Print the current score
 		if total > 0 {
 			percent := float64(correct) / float64(total) * 100
 			fmt.Printf("%sScore: %d/%d (%.1f%%)\n%s\n", colorCyan, correct, total, percent, Reset)
 		}
-		
+
 		// Get the next random note
 		note :=
 			NewRandomNote() // NewRandomNote() returns a simple struct, i.e. custom type Note ...
@@ -75,28 +78,37 @@ func main() {
 	}
 }
 
-var half int64
-
 /*
 .
 */
 
 // NewRandomNote generates a random note
 func NewRandomNote() Note { // Returns a simple struct; refer to Note's definition for details ::: - -
-	pitches := []string{"A6",
-		"G5", "F5", "E5", "D5", "C5", "B5", "A5",
-		"G4", "F4", "E4", "D4", "C4", "B4", "A4",
-		"G3", "F3", "E3", "D3", "C3", "B3", "A3",
-		"G2", "F2"}
-	//  24 pitches in the slice ...
+	// ::: force player to answer correctly
 	if tryThatAgain {
 		tryThatAgain = false
-		return Note{Pitch: pitches[rememberLastPick]} // ::: force player to answer correctly
+		if left {
+			return Note{Pitch: pitchesLeft[rememberLastPickL]}
+		} else if right {
+			return Note{Pitch: pitchesRight[rememberLastPickR]}
+		} else {
+			return Note{Pitch: pitchesAll[rememberLastPickAll]}
+		}
 	} else {
-		r := rand.Intn(24) // ... so, also 24 random indexes for the pitches slice
-		rememberLastPick = r
-		return Note{Pitch: pitches[r]} // Pitch is a member of the Note struct ...
-		// ... this says: make a Note type with its Pitch field set to pitches[r], and return that to the caller.
+		if left { // 11
+			r := rand.Intn(11) // ... 11 random indexes for the pitches-left const
+			rememberLastPickL = r
+			return Note{Pitch: pitchesLeft[r]} // ::: Pitch is a member of the Note struct ...
+		} else if right { // 13
+			r := rand.Intn(13) // ... 13 random indexes for the pitches-right const
+			rememberLastPickR = r
+			return Note{Pitch: pitchesRight[r]}
+		} else {
+			r := rand.Intn(24) // ... 24 random indexes for the pitches-all const
+			rememberLastPickAll = r
+			return Note{Pitch: pitchesAll[r]}
+		}
+		// ... those say: make a Note type with its Pitch field set to pitches__[r], and return that to the caller.
 	}
 }
 
@@ -104,7 +116,7 @@ func NewRandomNote() Note { // Returns a simple struct; refer to Note's definiti
 .
 */
 
-// Quiz process the player's response, track time, return results: (givenCreditForCorrectAnswer, shouldQuit, outlierAdded)
+// Quiz prompts, process the player's response, track time, return results: (givenCreditForCorrectAnswer, shouldQuit, outlierAdded)
 func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) { // ::: - -
 	/*
 		Usage of the Note type instead of a simple string is explained in the globals.go file.
@@ -121,8 +133,17 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
 
 	// DrawStaff is passed Pitch via a Note type struct
+	// DrawStaff is used to prompt ::: ONLY here!
 	DrawStaff(note, true, true) // prompting true causes a normal display of the staff
-	fmt.Print("Guess: ")        // Prompt the player for a guess.
+
+	// Prompt three ways: Lower cleft, Right-hand cleft, or the entire Grand staff:
+	if left {
+		fmt.Print("Guess-L: ") // Prompt the player for a guess in the lower staff.
+	} else if right {
+		fmt.Print("Guess-R: ") // Prompt the player for a guess in the upper staff.
+	} else {
+		fmt.Print("Guess: ") // Prompt the player for a guess throughout the entire staff.
+	}
 
 	// Obtain player's answer, "on the clock"
 	start := time.Now()                           // start the clock
@@ -131,7 +152,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	elapsedSec := float64(elapsedMs) / 1000.0     // recast time to a float, and convert Ms to sec
 	answer = strings.TrimSpace(answer)            // trim the answer (essential)
 
-	// Three ways to return early to the main loop
+	// All the ways to return early to the main loop
 	if strings.ToLower(answer) == "q" {
 		shouldQuit = true
 		return givenCreditForCorrectAnswer, shouldQuit, false // (isCorrect, shouldQuit, outlierAdded)
@@ -142,6 +163,27 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	}
 	if strings.ToLower(answer) == "s" {
 		PrintStats(mapOfNoteStats)
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
+	}
+	if strings.ToLower(answer) == "l" {
+		left = true
+		right = false
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
+	}
+	if strings.ToLower(answer) == "r" {
+		right = true
+		left = false
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
+	}
+	if strings.ToLower(answer) == "all" {
+		right = false
+		left = false
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
+	}
+	//
+	if strings.ToLower(answer) == "dir" {
+		fmt.Println("directives: L, R, all, S, O, Q)\n")
+		total--
 		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
 
@@ -168,7 +210,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 			CurentNoteStatsObject.TotalCorrectMs += elapsedMs
 			CurentNoteStatsObject.CorrectCount++
 			CurentNoteStatsObject.AvgCorrectSec = float64(CurentNoteStatsObject.TotalCorrectMs) / float64(CurentNoteStatsObject.CorrectCount) / 1000.0
-		} else if elapsedMs < 1090 { // 1000=1.00s ::: 1.00s because time.Sleep is 1.09s
+		} else if elapsedMs < 250 { // 1000=1.00s ::: because time.Sleep 1/4s
 			fmt.Printf("%sIt was %s. (but too fast, answer given prior to query being shown, not counted)%s\n", Red, pitch, Reset)
 			outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
 			tryThatAgain = true // because even though it was correct, it was pure luck (answered prior to the query)
@@ -179,7 +221,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 			outlierAdded = true
 		}
 		mapOfNoteStats[note.Pitch] = CurentNoteStatsObject
-		if elapsedMs > 1089 && elapsedMs <= 13000 { // is good, was not too fast, and not too slow
+		if elapsedMs > 249 && elapsedMs <= 13000 { // is good, was not too fast, and not too slow
 			givenCreditForCorrectAnswer = true
 			return givenCreditForCorrectAnswer, shouldQuit, outlierAdded // ::: in any case we return if answer == pitch
 		} else {
@@ -188,7 +230,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 		}
 	} else { // ::: Wrong
 		// Check for fast miss outlier
-		if elapsedMs < 1090 { // 2100 = 2.1 seconds, 700 = 0.7s, 1090 = 1.09s ::: 1.09s because time.Sleep is 1.0s
+		if elapsedMs < 250 { // 2100 = 2.1 seconds, 700 = 0.7s, 1090 = 1.09s ::: because time.Sleep is 1/4s
 			fmt.Printf("%sActually it was %s. (Too fast, answer given prior to query being shown, not counted)%s\n", Red, pitch, Reset)
 			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec}) // essential pointer magic here...
 			// Without pointer magic: outliers := append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: false, TimeSec: elapsedSec})

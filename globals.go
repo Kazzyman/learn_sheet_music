@@ -1,9 +1,30 @@
 package main
 
-// Create two global int vars, initialized to 0
-var correct, total, rememberLastPick int
+var pitchesAll = []string{
+	"A6",
+	"G5", "F5", "E5", "D5", "C5", "B5", "A5",
+	"G4", "F4", "E4", "D4",
+	"C4",
+	"B4", "A4",
+	"G3", "F3", "E3", "D3", "C3", "B3", "A3",
+	"G2", "F2",
+}
+var pitchesLeft = []string{
+	"B4", "A4",
+	"G3", "F3", "E3", "D3", "C3", "B3", "A3",
+	"G2", "F2",
+}
+var pitchesRight = []string{
+	"A6",
+	"G5", "F5", "E5", "D5", "C5", "B5", "A5",
+	"G4", "F4", "E4", "D4",
+	"C4",
+}
 
-var tryThatAgain bool
+// Create two global int vars, initialized to 0
+var correct, total, rememberLastPickL, rememberLastPickR, rememberLastPickAll int
+
+var tryThatAgain, left, right bool
 
 // ANSI color codes being assigned to constant string-like user-defined reserved words.
 const (
