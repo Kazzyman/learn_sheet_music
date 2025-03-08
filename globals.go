@@ -1,23 +1,23 @@
 package main
 
-var pitchesAll = []string{
+var pitchesAll = []string{ // ::: - -
 	"A5", "G5", "F5", "E5", "D5", "C5",
 	"B4", "A4", "G4", "F4", "E4", "D4", "C4",
 	"B3", "A3", "G3", "F3", "E3", "D3", "C3",
 	"B2", "A2", "G2", "F2",
 }
-var pitchesLeft = []string{
+var pitchesLeft = []string{ // ::: - -
 	"B3", "A3", "G3", "F3", "E3", "D3", "C3",
 	"B2", "A2", "G2", "F2",
 }
-var pitchesRight = []string{
+var pitchesRight = []string{ // ::: - -
 	"A5", "G5", "F5", "E5", "D5", "C5",
 	"B4", "A4", "G4", "F4", "E4", "D4", "C4",
 }
 
 // First we make an slice of strings, one string for each staff line
 // staff := []string{
-var showStaff = []string{
+var showStaff = []string{ // ::: - -
 	"        ---a--- \n",      // 1 (A5)
 	"              G      \n", // 2 (G5)
 	"  ---------f---------\n", // 3 (F5)
@@ -44,16 +44,15 @@ var showStaff = []string{
 	"              F      \n", // (F2)
 }
 
-// Create two global int vars, initialized to 0
 var correct, total, rememberLastPickL, rememberLastPickR, rememberLastPickAll int
 
-var tryThatAgain, left, right, givenCreditForCorrectAnswer bool
+var tryThatAgain, left, right, givenCreditForCorrectAnswer, shouldQuit, outlierAdded, trainingWheels, didADirective bool
 
-var answer string
+var answer string // ::: - -
 
 // ANSI color codes being assigned to constant string-like user-defined reserved words.
 const (
-	Green     = "\033[32m"
+	Green     = "\033[32m" // ::: - -
 	Red       = "\033[31m"
 	LightBlue = "\033[94m"
 	Reset     = "\033[0m"
@@ -73,7 +72,8 @@ to mistakes in a larger app (e.g., passing a random string like "hello"). e.g. n
 
 // Note represents a musical note; see below for why it is "useful" to deploy this simple struct in place of a sting
 type Note struct { // ::: - -
-	Pitch string // e.g., "C5"
+	Pitch     string // e.g., "C5"
+	LastPitch string // the last note used
 }
 
 /*

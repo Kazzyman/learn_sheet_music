@@ -31,11 +31,15 @@ Progress and scoring is shown during play.
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
 	fmt.Println("Identify the note below (or give a directive: L, R, all, S, O, Q, or dir.)\n")
+	/*
+		trainingWheels = false
+		didADirective = false
+		left = false  // When both are false it signifies we are being prompted on the entire Grand staff ...
+		right = false // ... left: Lower; right: upper, or right-hand notes
 
-	left = false  // When both are false it signifies we are being prompted on the entire Grand staff ...
-	right = false // ... left: Lower; right: upper, or right-hand notes
+		tryThatAgain = false // When the player commits an error, the player is forced to try that note again
 
-	tryThatAgain = false // When the player commits an error, the player is forced to try that note again
+	*/
 
 	for {
 		// Print the current score
@@ -50,7 +54,7 @@ func main() {
 		// ... refer to the type definition in globals.go for why it is done this way.
 
 		// Quiz :: process a single question, track time, and return 3 bool results
-		givenCreditForCorrectAnswer, shouldQuit, outlierAdded :=
+		givenCreditForCorrectAnswer, shouldQuit, outlierAdded =
 			Quiz(note, stats, &outliers) // "&outliers" gets a pure and simple pointer
 		// ... the above is a good example of passing by pointer, &outliers evaluates|resolves to a pointer.
 		// Notice that since stats is a map, and therefore of reference type, there is no need to pass it by pointer.
@@ -76,11 +80,15 @@ func main() {
 		if givenCreditForCorrectAnswer {
 			// Pause for a bit before re-prompting the player
 			time.Sleep(time.Second / 4) // one second / 4 ; or one quarter second
+		} else if didADirective {
+			didADirective = false
+			// Pause for a bit before re-prompting the player
+			time.Sleep(time.Second / 4) // one second / 4 ; or one quarter second
 		} else {
 			time.Sleep(time.Second * 2)
 		}
-
 	}
+	// end of main loop
 }
 
 /*
@@ -122,7 +130,7 @@ func NewRandomNote() Note { // Returns a simple struct; refer to Note's definiti
 */
 
 // Quiz prompts, process the player's response, track time, return results: (givenCreditForCorrectAnswer, shouldQuit, outlierAdded)
-func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (bool, bool, bool) { // ::: - -
+func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (givenCredit bool, shouldQuit bool, outlierAdded bool) { // ::: - -
 	/*
 		Usage of the Note type instead of a simple string is explained in the globals.go file.
 		&outliers makes a pointer to a slice of structures, so Quiz gets *[]Outlier as a parameter (a pointer).
@@ -133,9 +141,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 		"go" always passes by value, "exception": maps are reference types, so maps are kinda pseudo pointers by default.
 	*/
 	// ::: givenCreditForCorrectAnswer := false
-	shouldQuit := false
-
-	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
+	shouldQuit = false
 
 	// DrawStaff is passed Pitch via a Note type struct
 	// DrawStaff is used to prompt ::: ONLY here!
@@ -163,7 +169,8 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 
 	givenCreditForCorrectAnswer = false
 
-	// Obtain player's answer, "on the clock"
+	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
+	// ::: Obtain player's answer, "on the clock"
 	start := time.Now()                           // start the clock
 	answer, _ = reader.ReadString('\n')           // obtain the player's guess
 	elapsedMs := time.Since(start).Milliseconds() // stop the clock
@@ -186,26 +193,38 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	if strings.ToLower(answer) == "l" {
 		left = true
 		right = false
+		didADirective = true
 		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
 	if strings.ToLower(answer) == "r" {
 		right = true
 		left = false
+		didADirective = true
 		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
 	if strings.ToLower(answer) == "all" {
 		right = false
 		left = false
+		didADirective = true
 		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
 	//
 	if strings.ToLower(answer) == "dir" {
-		fmt.Println("directives: L, R, all, S, O, Q, show)\n")
+		fmt.Println("directives: L, R, all, S, O, Q, tw, two)\n")
 		total--
 		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
-	if strings.ToLower(answer) == "show" {
-		fmt.Println(showStaff)
+
+	// trainingWheels
+	if strings.ToLower(answer) == "tw" {
+		trainingWheels = true
+		didADirective = true
+		total--
+		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
+	}
+	if strings.ToLower(answer) == "two" {
+		trainingWheels = false
+		didADirective = true
 		total--
 		return givenCreditForCorrectAnswer, shouldQuit, false // Continue, no score change, no outlier
 	}
@@ -223,32 +242,23 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	// "mapOfNoteStats" is a map, a correspondence between pitch (a string) and a NoteStats struct
 
 	CurentNoteStatsObject.Attempts++ // increment the Attempts field/member of the current (specific) NoteStats struct
-	outlierAdded := false
+	outlierAdded = false
 
 	// Test the player's guess
-	// ::: Correct
-	if strings.ToUpper(answer) == pitch {
+	if strings.ToUpper(answer) == pitch { // ::: Correct
 		DrawStaff(note, false, true) // redraw the staff with the note shown in green to signify a correct guess.
-		if elapsedMs <= 13000 {      // 13 seconds threshold
-			CurentNoteStatsObject.TotalCorrectMs += elapsedMs
-			CurentNoteStatsObject.CorrectCount++
-			CurentNoteStatsObject.AvgCorrectSec = float64(CurentNoteStatsObject.TotalCorrectMs) / float64(CurentNoteStatsObject.CorrectCount) / 1000.0
-		} else if elapsedMs < 250 { // 1000=1.00s ::: because time.Sleep 1/4s
+		CurentNoteStatsObject.TotalCorrectMs += elapsedMs
+		CurentNoteStatsObject.CorrectCount++
+		CurentNoteStatsObject.AvgCorrectSec = float64(CurentNoteStatsObject.TotalCorrectMs) / float64(CurentNoteStatsObject.CorrectCount) / 1000.0
+		if elapsedMs < 250 { // 1000=1.00s ::: because time.Sleep 1/4s
 			fmt.Printf("%sIt was %s. (but too fast, answer given prior to query being shown, not counted)%s\n", Red, pitch, Reset)
 			outlierAdded = true // We use this flag to inform the player of the disposition of this super-fast screw-up
 			tryThatAgain = true // because even though it was correct, it was pure luck (answered prior to the query)
-		} else {
-			// The player took a long time to get it right, so log it as an outlier and set a flag to nudge the player for being pokey.
-			fmt.Printf("%sToo slow%s, therefore ... ", colorYellow, Reset)
-			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec}) // add some literals to a slice
-			outlierAdded = true
+			*outliers = append(*outliers, Outlier{Pitch: note.Pitch, WasCorrect: true, TimeSec: elapsedSec})
 		}
 		mapOfNoteStats[note.Pitch] = CurentNoteStatsObject
-		if elapsedMs > 249 && elapsedMs <= 13000 { // is good, was not too fast, and not too slow
+		if elapsedMs > 250 {
 			givenCreditForCorrectAnswer = true
-			return givenCreditForCorrectAnswer, shouldQuit, outlierAdded // ::: in any case we return if answer == pitch
-		} else {
-			givenCreditForCorrectAnswer = false
 			return givenCreditForCorrectAnswer, shouldQuit, outlierAdded // ::: in any case we return if answer == pitch
 		}
 	} else { // ::: Wrong
@@ -304,10 +314,7 @@ func printOutliers(outliers []Outlier) {
 		return
 	}
 	for i, o := range outliers {
-		result := "Correct (too slow, over 13s)"
-		if !o.WasCorrect {
-			result = "Missed (too fast, under 2.1s)"
-		}
+		result := "(too fast, under 250 Ms)"
 		fmt.Printf("%s%d: %s - %s, %.3f seconds%s\n", LightBlue, i+1, o.Pitch, result, o.TimeSec, Reset)
 	}
 }

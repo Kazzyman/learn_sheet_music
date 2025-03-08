@@ -40,9 +40,16 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 		"B3": 13, "A3": 14, "G3": 15, "F3": 16, "E3": 17, "D3": 18, "C3": 19,
 		"B2": 20, "A2": 21, "G2": 22, "F2": 23,
 	}
+	lineMap := map[int]string{
+		0: "A5", 1: "G5", 2: "F5", 3: "E5", 4: "D5", 5: "C5",
+		6: "B4", 7: "A4", 8: "G4", 9: "F4", 10: "E4", 11: "D4", 12: "C4",
+		13: "B3", 14: "A3", 15: "G3", 16: "F3", 17: "E3", 18: "D3", 19: "C3",
+		20: "B2", 21: "A2", 22: "G2", 23: "F2",
+	}
 
 	// ::: obtain an index into the lines of the staff (counting begins at 0)
-	lineIndex, exists := pitchMap[note.Pitch] // use a random note as an index|key into pitchMap
+	lineIndex, exists := pitchMap[note.Pitch] // use a random note as an index|key into pitchMap ...
+	// ... this finds the line of the staff that the note.Pitch should go on
 	// handle error
 	// fmt.Printf("\nlineIndex: %d, exists: %t\n", lineIndex, exists)
 	if !exists { // if the value of exists is false
@@ -50,25 +57,47 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 	}
 
 	if prompting {
-		fmt.Println(showStaff)
-		/*
-				When prompting, we need to print the lines of the staff one at a time so that we can
-			insert an extra line between the treble and bass clefts.
-		*/
-		// place the note on the staff -- ::: insert the note within the indexed line
-		staff[lineIndex] = staff[lineIndex][:10] + Red + "●" + Reset + staff[lineIndex][11:]
-		lineCounter := 0
-		for _, oneOfThe25Lines := range staff {
-			fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, indexed
-			lineCounter++
-			if lineCounter > 24 {
-				return
-			} else if lineCounter == 14 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
-				fmt.Println()
+		if !trainingWheels {
+			fmt.Println(showStaff)
+			/*
+					When prompting, we need to print the lines of the staff one at a time so that we can
+				insert an extra line between the treble and bass clefts.
+			*/
+			// place the note on the staff -- ::: insert the note within the indexed line
+			staff[lineIndex] = staff[lineIndex][:10] + Red + "●" + Reset + staff[lineIndex][11:]
+			lineCounter := 0
+			for _, oneOfThe25Lines := range staff {
+				fmt.Printf("%s\n", oneOfThe25Lines) // Print one line, indexed
+				lineCounter++
+				if lineCounter > 24 {
+					return
+				} else if lineCounter == 13 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
+					fmt.Println()
+				}
+			}
+			// When correct, immediately reprint the staff with the note in green such that it appears that the note has changed color...
+			// ... and includes note.Pitch -- the player should adjust the terminal view scale to allow full view of prior staff
+		} else {
+			fmt.Println(showStaff)
+			/*
+					When prompting, we need to print the lines of the staff one at a time so that we can
+				insert an extra line between the treble and bass clefts.
+			*/
+			// place the note on the staff -- ::: insert the note within the indexed line
+			staff[lineIndex] = staff[lineIndex][:10] + Red + "●" + Reset + staff[lineIndex][11:]
+			lineCounter := 0
+			for _, oneOfThe25Lines := range staff {
+				indexToPitch, _ := lineMap[lineCounter]
+				// ::: ========================================================
+				fmt.Printf("%s%s\n", oneOfThe25Lines, indexToPitch) // Print one line, indexed
+				lineCounter++
+				if lineCounter > 24 {
+					return
+				} else if lineCounter == 13 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
+					fmt.Println()
+				}
 			}
 		}
-		// When correct, immediately reprint the staff with the note in green such that it appears that the note has changed color...
-		// ... and includes note.Pitch -- the player should adjust the terminal view scale to allow full view of prior staff
 	} else if correct { // ::: Correct case !!
 		staff[lineIndex] = staff[lineIndex][:10] + Green + "●" + note.Pitch + Reset + staff[lineIndex][11:]
 		lineCounter := 0
@@ -77,7 +106,7 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 			lineCounter++
 			if lineCounter > 24 {
 				return
-			} else if lineCounter == 14 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
+			} else if lineCounter == 13 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
 				fmt.Println()
 			}
 		}
@@ -102,7 +131,7 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 				tryThatAgain = true
 				fmt.Printf("%sYour guess was: %s  %s", Red, answer, Reset) // ::: fix to answer
 				return
-			} else if lineCounter == 14 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
+			} else if lineCounter == 13 { // When displaying the staff as a prompt, add a blank space between treble and bass clefts.
 				fmt.Println()
 			}
 		}
