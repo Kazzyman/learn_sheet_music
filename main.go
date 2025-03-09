@@ -11,36 +11,32 @@ import (
 
 /*
 // ::: About:
-This project is spread across 3 go files and is formatted for JetBrains GoLand. The 3 files are globals.go, drawStaff.go
+This project is spread across 3 go files (plus go.mod) and is formatted for JetBrains GoLand. The 3 files are globals.go, drawStaff.go
 and this one. The author is strictly a hobbyist who specializes in learning apps of personal interest, sometimes with a
 game-style option. The comments herein reflect the fact that it is highly-unlikely that anyone other than the author will
-ever read them. Three sequential colons: ::: causes the rest of a comment line to be highlighted.
+ever read them. Three sequential colons: ::: causes the rest of a comment line to be highlighted (per custom goLand setup).
 */
 
 /*
 // ::: Features:
-Notes show in Red for added visibility.
-Correct answers cause the note to turn green.
+The app can be given directives (in lew of a note); the directive "dir" shows all available directives: L, R, all, S, O, Q, tw, two :
+... Left-hand (bass) cleft only; Right-hand cleft only; All staff lines; Stats; Outliers; Quit; TrainingWheels, TrainingWheelsOff.
+Notes show on the staff in Red for added visibility.
+Correct answers cause the note to flash green (along with the octave designation).
 Wrong answers turn the note yellow, and the correct response is shown alongside it.
 Wrong answers demand a repeat of the failed query, until correctly answered.
 All statistics are logged and reported during app shutdown; or upon request via directives: "s", or "o"
-Progress and scoring is shown during play.
+Progress and scoring is shown during play; and an over-head cheat sheet is always in view.
 */
 /*
  */
 func main() {
 	fmt.Println("\nRick's first Sheet Music Learning App")
-	fmt.Println("Identify the note below (or give a directive: L, R, all, S, O, Q, or dir.)\n")
+	fmt.Println("Identify the note below (or give a directive: L, R, all, S, O, Q, tw, two, or dir.)\n")
 	/*
-		trainingWheels = false
-		didADirective = false
-		left = false  // When both are false it signifies we are being prompted on the entire Grand staff ...
-		right = false // ... left: Lower; right: upper, or right-hand notes
-
-		tryThatAgain = false // When the player commits an error, the player is forced to try that note again
-
+		All bools are created as false values, so no need to set them as such.
 	*/
-
+	givenCreditForCorrectAnswer = true
 	for {
 		// Print the current score
 		if total > 0 {
@@ -50,12 +46,12 @@ func main() {
 
 		// Get the next random note
 		note :=
-			NewRandomNote() // NewRandomNote() returns a simple struct, i.e. custom type Note ...
-		// ... refer to the type definition in globals.go for why it is done this way.
+			NewRandomNote() // NewRandomNote() returns a simple struct, i.e. the custom type "Note" ...
+		// ... Please refer to the type definition in globals.go for why it is being done this way.
 
 		// Quiz :: process a single question, track time, and return 3 bool results
 		givenCreditForCorrectAnswer, shouldQuit, outlierAdded =
-			Quiz(note, stats, &outliers) // "&outliers" gets a pure and simple pointer
+			Quiz(note, stats, &outliers) // "&outliers" gets a pure and simple pointer (not de-referenced)
 		// ... the above is a good example of passing by pointer, &outliers evaluates|resolves to a pointer.
 		// Notice that since stats is a map, and therefore of reference type, there is no need to pass it by pointer.
 
@@ -85,7 +81,7 @@ func main() {
 			// Pause for a bit before re-prompting the player
 			time.Sleep(time.Second / 4) // one second / 4 ; or one quarter second
 		} else {
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second * 2) // sometimes a longer nap is useful/indicated.
 		}
 	}
 	// end of main loop
@@ -96,32 +92,40 @@ func main() {
 */
 
 // NewRandomNote generates a random note
-func NewRandomNote() Note { // Returns a simple struct; refer to Note's definition for details ::: - -
+func NewRandomNote() Note { // Returns a simple struct; refer to Note's global definition for details ::: - -
 	// ::: force player to answer correctly prior to being given a new novel note to guess
-	if tryThatAgain {
+	if tryThatAgain { // Return the same note if we need to try it again.
 		tryThatAgain = false
 		if left {
-			return Note{Pitch: pitchesLeft[rememberLastPickL]}
+			return Note{Pitch: pitchesLeft[rememberLastPickL]} // Note is a struct with Pitch as one of its elements
 		} else if right {
-			return Note{Pitch: pitchesRight[rememberLastPickR]}
+			return Note{Pitch: pitchesRight[rememberLastPickR]} // these say, give me the Pitch (note) indexed by rememberLastPick_ ...
 		} else {
-			return Note{Pitch: pitchesAll[rememberLastPickAll]}
+			return Note{Pitch: pitchesAll[rememberLastPickAll]} // ... from a pitches__ slice. i.e., use pitchesAll[rememberLastPickAll]
 		}
+		/*
+			The above means that r from below (renamed rememberLastPickAll) is being used to pull the same note as the last time NewRandomNote()
+			was called: same r index, same pitches slice of notes as strings. Simple.
+		*/
 	} else {
 		if left { // 11
-			r := rand.Intn(11) // ... 11 random indexes for the pitches-left const
+			r := rand.Intn(11) // ... 11 random indexes for the pitches-left slice
 			rememberLastPickL = r
 			return Note{Pitch: pitchesLeft[r]} // ::: Pitch is a member of the Note struct ...
 		} else if right { // 13
-			r := rand.Intn(13) // ... 13 random indexes for the pitches-right const
+			r := rand.Intn(13) // ... 13 random indexes for the pitches-right slice
 			rememberLastPickR = r
 			return Note{Pitch: pitchesRight[r]}
-		} else {
-			r := rand.Intn(24) // ... 24 random indexes for the pitches-all const
+		} else { // 24 total
+			r := rand.Intn(24) // ... 24 random indexes for the pitches-all slice
 			rememberLastPickAll = r
 			return Note{Pitch: pitchesAll[r]}
 		}
-		// ... those say: make a Note type with its Pitch field set to pitches__[r], and return that to the caller.
+		/*
+			... those say: make a Note type with its Pitch field set to pitches__[r], and return that to the caller. It's odd, I know.
+			We could have elected to simply return the Pitch of the note as a simple string. Refer to the comments in the definition of
+			the Note struct in globals.go for an explanation of why it is being done this way.
+		*/
 	}
 }
 
@@ -129,6 +133,7 @@ func NewRandomNote() Note { // Returns a simple struct; refer to Note's definiti
 .
 */
 
+// Return value are not required to have lables but doing so is extremely helpful as it causes goLand to annotate each call made.
 // Quiz prompts, process the player's response, track time, return results: (givenCreditForCorrectAnswer, shouldQuit, outlierAdded)
 func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (givenCredit bool, shouldQuit bool, outlierAdded bool) { // ::: - -
 	/*
@@ -137,10 +142,9 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 		*[]Outlier is a pointer to that slice; the * de-references, while pointing, resulting in the slice, not just ...
 		... the pointer itself. Why do this? Because passing outliers []Outlier would give us a copy rather than the original.
 		Here outliers *[]Outlier gives us the outliers "out there", whereas if we had used outliers []Outlier we'd get a local
-		copy of the object (in this case a slice of structures) in the outside world and persistence would be lost.
-		"go" always passes by value, "exception": maps are reference types, so maps are kinda pseudo pointers by default.
+		copy of the object (in this case a slice of structures) -- a copy of what is in the outside world and persistence would be lost.
+		"go" always passes by value; the "exception": maps, maps are inherently reference types, so maps are kinda pseudo pointers by default.
 	*/
-	// ::: givenCreditForCorrectAnswer := false
 	shouldQuit = false
 
 	// DrawStaff is passed Pitch via a Note type struct
@@ -172,7 +176,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	reader := bufio.NewReader(os.Stdin) // Create local "reader" which is an object of type bufio.NewReader
 	// ::: Obtain player's answer, "on the clock"
 	start := time.Now()                           // start the clock
-	answer, _ = reader.ReadString('\n')           // obtain the player's guess
+	answer, _ = reader.ReadString('\n')           // ::: obtain the player's guess
 	elapsedMs := time.Since(start).Milliseconds() // stop the clock
 	elapsedSec := float64(elapsedMs) / 1000.0     // recast time to a float, and convert Ms to sec
 	answer = strings.TrimSpace(answer)            // trim the answer (essential)
@@ -237,7 +241,7 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 	CurentNoteStatsObject := mapOfNoteStats[note.Pitch] // "Pitch" is a field/member of the Note struct (locally: note) ...
 	// ... mapOfNoteStats[note.Pitch] obtains the NoteStats struct "indexed" by the Key string: note.Pitch
 	// ... it says: give me the NoteStats in the map of NoteStats at Pitch in the map
-	// ::: therefore, "CurentNoteStatsObject" is created as a NoteStats object.
+	// ::: therefore, "CurentNoteStatsObject" is created as a NoteStats object. ???
 	// Here "note" is actually a Note struct (because it was passed into this func as such)
 	// "mapOfNoteStats" is a map, a correspondence between pitch (a string) and a NoteStats struct
 
@@ -278,8 +282,9 @@ func Quiz(note Note, mapOfNoteStats map[string]NoteStats, outliers *[]Outlier) (
 			tryThatAgain = true
 		}
 	}
-	mapOfNoteStats[note.Pitch] = CurentNoteStatsObject // update the mapOfNoteStats map at Key = note.Pitch; update it with the "s" structure, remembering that s := mapOfNoteStats[note.Pitch] ...
-	// ... and mapOfNoteStats is a map of the form map[string]NoteStats
+	mapOfNoteStats[note.Pitch] = CurentNoteStatsObject // update the mapOfNoteStats map at Key = note.Pitch; update it with the CurentNoteStatsObject ...
+	// ... (formerly called the "s" structure), remembering that s := mapOfNoteStats[note.Pitch] ...
+	// ... and mapOfNoteStats is a map of the form map[string]NoteStats ::: clear as mud
 	return givenCreditForCorrectAnswer, shouldQuit, outlierAdded // return three bools: givenCreditForCorrectAnswer, shouldQuit, outlierAdded
 }
 
@@ -292,8 +297,8 @@ func PrintStats(stats map[string]NoteStats) {
 		"B2", "A2", "G2", "F2",
 	}
 	fmt.Printf("%s--- Note Stats ---%s\n", colorYellow, Reset)
-	for _, pitch := range orderedPitches { // ::: each loop prints the stats for one note
-		s := stats[pitch] // get the NoteStats for one pitch, from the orderedPitches slice
+	for _, pitch := range orderedPitches { // ::: each loop prints the stats for one note pulled from the orderedPitches slice
+		s := stats[pitch] // get the NoteStats for one pitch, which was pulled from the orderedPitches slice
 		avgTime := "N/A"
 		if s.CorrectCount > 0 {
 			avgTime = fmt.Sprintf("%.3f seconds", s.AvgCorrectSec)

@@ -88,7 +88,6 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 			lineCounter := 0
 			for _, oneOfThe25Lines := range staff {
 				indexToPitch, _ := lineMap[lineCounter]
-				// ::: ========================================================
 				fmt.Printf("%s%s\n", oneOfThe25Lines, indexToPitch) // Print one line, indexed
 				lineCounter++
 				if lineCounter > 24 {
@@ -115,13 +114,8 @@ func DrawStaff(note Note, prompting bool, correct bool) { // accepts a simple st
 		// When wrong, reprint the staff with the note in yellow such that it appears that the note has changed color ...
 		// ... and, add the correct note, e.g., E5, next to the yellow note to inform the player of the right answer.
 		// ::: -------- First, we setup the staff slice ... ----------------------------------------------------------------------------
-		if lineIndex == 14 {
-			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " A breaks the pattern" + Reset + staff[lineIndex][11:]
-		} else if lineIndex == 13 {
-			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " B breaks the pattern" + Reset + staff[lineIndex][11:]
-		} else { // ::: it is a regular line ...
-			staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " " + Reset + staff[lineIndex][11:]
-		}
+		staff[lineIndex] = staff[lineIndex][:10] + colorYellow + "● " + note.Pitch + " " + Reset + staff[lineIndex][11:]
+
 		// ::: ... then, we print all the lines, one at a time
 		lineCounter := 0
 		for _, oneOfThe25Lines := range staff {

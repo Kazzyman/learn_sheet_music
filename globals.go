@@ -18,30 +18,30 @@ var pitchesRight = []string{ // ::: - -
 // First we make an slice of strings, one string for each staff line
 // staff := []string{
 var showStaff = []string{ // ::: - -
-	"        ---a--- \n",      // 1 (A5)
-	"              G      \n", // 2 (G5)
-	"  ---------f---------\n", // 3 (F5)
-	"              E      \n", // 4 (E5)
-	"  ---------d---------\n", // 5 (D5)
-	"              C      \n", // 6 (C5) --------- 5th octave starts on C and runs through B
-	"  ---------b---------\n", // 7 (B4)
-	"              A      \n", // 8 (A4)
-	"  ---------g---------\n", // 9 (G4)
-	"              F      \n", // 10(F4)
-	"  ---------e---------\n", // 11(E4)
-	"              D      \n", // 12(D4)
-	"        ---c--- \n\n",    // 13(C4) ======  4th octave starts on C and runs through B
-	"              B      \n", // 14(B3)  A & B are ::: two steps up from G would be B
-	"  ---------a---------\n", // 15(A3)           ::: two steps up from F would be A
-	"              G      \n", // 16 (G3)
-	"  ---------f---------\n", // (F3)
-	"              E      \n", // (E3)
-	"  ---------d---------\n", // (D3)
-	"              C      \n", // (C3) --------- 3erd octave starts on C and runs through B
-	"  ---------b---------\n", // (B2)
-	"              A      \n", // (A2)
-	"  ---------g---------\n", // (G2)
-	"              F      \n", // (F2)
+	"        ---a---    \n",              // 1 (A5)
+	"              G       \n",           // 2 (G5)
+	"  ---------f--------- f d b g e \n", // 3 (F5)
+	"              E    e c a f   \n",    // 4 (E5)
+	"  ---------d---------\n",            // 5 (D5)
+	"              C      \n",            // 6 (C5) --------- 5th octave starts on C and runs through B
+	"  ---------b---------\n",            // 7 (B4)
+	"              A      \n",            // 8 (A4)
+	"  ---------g------5---   G line\n",  // 9 (G4)
+	"              F   4   \n",           // 10(F4)
+	"  ---------e------3---\n",           // 11(E4)
+	"              D   2   \n",           // 12(D4)
+	"        ---c---   1\n\n",            // 13(C4) ======  4th octave starts on C and runs through B
+	"              B      \n",            // 14(B3)  A & B are ::: two steps up from G would be B
+	"  ---------a--------- a f d b g\n",  // 15(A3)           ::: two steps up from F would be A
+	"              G   1   g e c a \n",   // 16 (G3)
+	"  ---------f------2---   F line\n",  // (F3)
+	"              E   3   \n",           // (E3)
+	"  ---------d------4---\n",           // (D3)
+	"              C   5   \n",           // (C3) --------- 3erd octave starts on C and runs through B
+	"  ---------b---------\n",            // (B2)
+	"              A      \n",            // (A2)
+	"  ---------g---------\n",            // (G2)
+	"              F      \n",            // (F2)
 }
 
 var correct, total, rememberLastPickL, rememberLastPickR, rememberLastPickAll int
@@ -70,7 +70,7 @@ to mistakes in a larger app (e.g., passing a random string like "hello"). e.g. n
     3.  Most important is Readability: note.Pitch is self-explanatory; pitch alone might be less obvious in a bigger project.
 */
 
-// Note represents a musical note; see below for why it is "useful" to deploy this simple struct in place of a sting
+// Note represents a musical note; see above comment block for why it is "useful" to deploy this simple struct in place of a sting
 type Note struct { // ::: - -
 	Pitch     string // e.g., "C5"
 	LastPitch string // the last note used
